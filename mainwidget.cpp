@@ -72,6 +72,7 @@ MainWidget::MainWidget(QWidget *parent)
     ecgiiPlot.updateInterval = 1;
     ecgiiPlot.color = Qt::green;
     ecgiiPlot.text = "ECG";
+    ecgiiPlot.plotflag = 1;
 
     spo2Plot.y0 = 0;
     spo2Plot.yScale = 300;
@@ -79,6 +80,7 @@ MainWidget::MainWidget(QWidget *parent)
     spo2Plot.updateInterval = 1;
     spo2Plot.color = Qt::red;
     spo2Plot.text = "SPO2";
+    spo2Plot.plotflag = 2;
 
     bpPlot.y0 = 0;
     bpPlot.yScale = 300;
@@ -86,6 +88,8 @@ MainWidget::MainWidget(QWidget *parent)
     bpPlot.updateInterval = 1;
     bpPlot.color = Qt::yellow;
     bpPlot.text = "BP";
+    bpPlot.plotflag = 3;
+
     connect(gs, &GetSerial::receivedECGdata, &ecgiiPlot, &PlotWidget::sendData);
     connect(gs, &GetSerial::receivedBPdata, &bpPlot, &PlotWidget::sendData);
     connect(gs, &GetSerial::receivedSPO2data, &spo2Plot, &PlotWidget::sendData);
@@ -115,12 +119,21 @@ MainWidget::MainWidget(QWidget *parent)
 
     gs->connectPort();
 
-    connect(&title, &TitleBar::middleTCP, this, &MainWidget::setTCPIP);
-}
-
-MainWidget::~MainWidget()
-{
-
+    cl.moveToThread(&tcpThread);
+    tcpThread.start();
+    cl.hr = &hr;
+    cl.st = &st;
+    cl.nibp = &nibp;
+    cl.spo2 = &spo2;
+    cl.temp = &temp;
+    cl.resp = &resp;
+    cl.co2 = &co2;
+    cl.ecgiiPlot = &ecgiiPlot;
+    cl.spo2Plot = &spo2Plot;
+    cl.bpPlot = &bpPlot;
+    cl.titlebar = &title;
+    connect(this, &MainWidget::initTCPSig, &cl, &Client::initALL);
+    emit initTCPSig();
 }
 
 void MainWidget::resizeEvent(QResizeEvent *event)
@@ -137,12 +150,3 @@ void MainWidget::setNotFull()
 {
     this->showNormal();
 }
-
-void MainWidget::setTCPIP(QString ip, quint16 mport)
-{
-    ipAddr = ip;
-    port = mport;
-    socket->abort();
-    socket->connectToServer(ipAddr, port);
-}
-

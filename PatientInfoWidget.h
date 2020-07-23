@@ -2,6 +2,7 @@
 #define PATIENTINFOWIDGET_H
 
 #include <QWidget>
+#include "TCPSocket.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
